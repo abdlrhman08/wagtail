@@ -15,6 +15,7 @@ from django.utils.text import capfirst
 from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
 
+from wagtail.admin.ui.tables import Column
 from wagtail.coreutils import multigetattr
 
 
@@ -174,8 +175,13 @@ class SpreadsheetExportMixin:
 
     def to_row_dict(self, item):
         """Returns an OrderedDict (in the order given by list_export) of the exportable information for a model instance"""
+        list_accessors = [
+            field.accessor if isinstance(field, Column) else field
+            for field in self.list_export
+        ]
+
         row_dict = OrderedDict(
-            (field, multigetattr(item, field)) for field in self.list_export
+            (field, multigetattr(item, field)) for field in list_accessors
         )
         return row_dict
 
@@ -226,6 +232,10 @@ class SpreadsheetExportMixin:
         heading_override = self.export_headings.get(field)
         if heading_override:
             return force_str(heading_override)
+
+        if isinstance(field, Column):
+            field = field.accessor
+
         try:
             return capfirst(force_str(label_for_field(field, queryset.model)))
         except (AttributeError, FieldDoesNotExist):
