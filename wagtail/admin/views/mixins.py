@@ -175,13 +175,11 @@ class SpreadsheetExportMixin:
 
     def to_row_dict(self, item):
         """Returns an OrderedDict (in the order given by list_export) of the exportable information for a model instance"""
-        list_accessors = [
-            field.accessor if isinstance(field, Column) else field
-            for field in self.list_export
-        ]
-
         row_dict = OrderedDict(
-            (field, multigetattr(item, field)) for field in list_accessors
+            (field, field.get_value(item))
+            if isinstance(field, Column)
+            else (field, multigetattr(item, field))
+            for field in self.list_export
         )
         return row_dict
 
